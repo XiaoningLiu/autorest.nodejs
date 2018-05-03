@@ -13,10 +13,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-# Modification Part Document
-
+# Server Generatoin for Azure Storage Document
 
 ## Target
+
 The new architecture will try best to use the swagger spec. Trying to generate more part in the storage emulator that can be inferred from the swagger spec.
 
 ## Possible Ways 
@@ -93,6 +93,7 @@ I only implemented createQueue, createMessage and getMessage API. You can use th
 > })
 > ```
 Create the two file and put them together
+
 7. Run the test code
 ```shell
 npm install
