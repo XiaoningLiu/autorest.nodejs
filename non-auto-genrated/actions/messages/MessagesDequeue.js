@@ -28,7 +28,6 @@ class Dequeue {
     const response = new AzuriteQueueResponse()
     response.addHttpProperty(N.CONTENT_TYPE, 'application/xml')
     res.set(response.httpProps)
-    console.log(xmlBody)
     res.status(200).send(xmlBody)
   }
 }
