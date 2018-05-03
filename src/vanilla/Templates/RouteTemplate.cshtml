@@ -1,0 +1,75 @@
+@using System
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@using System.Reflection
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.MethodJs>
+@EmptyLine
+
+router.@(Model.HttpMethod.ToString().ToLower())('@Model.BuildRegExp(@Model.Url.ToString())', async (req, res, next)=>{
+  if(@Model.BuildQueryCondition()){
+    // Serialization
+    req.operation = Operations.@(Model.Group.ToCamelCase()).@(Model.SerializedName.ToUpper())
+    req.parameters = {}
+    // Just for Test
+    // TODO: Path parameters
+    req.parameters.url = 'http://127.0.0.1:3000'
+    req.parameters.queueName = 'test'
+    @foreach(var parameter in Model.LogicalParameters.Where(p => p.Location == ParameterLocation.Query))
+    {
+      if(parameter.ModelType is PrimaryType){
+        PrimaryType primary = parameter.ModelType as PrimaryType;
+        if(primary.KnownPrimaryType == KnownPrimaryType.Double ||
+          primary.KnownPrimaryType == KnownPrimaryType.Decimal ||
+          primary.KnownPrimaryType == KnownPrimaryType.Int ||
+          primary.KnownPrimaryType == KnownPrimaryType.Long){
+    @:req.parameters.@(parameter.Name) = parseInt(req.query.@(parameter.Name))
+          } else {
+    @:req.parameters.@(parameter.Name) = req.query.@(parameter.Name)
+          }
+      } else {
+    @:req.parameters.@(parameter.Name) = req.query.@(parameter.Name)
+      }
+    }
+
+    @foreach(var parameter in Model.LogicalParameters.Where(p => p.Location == ParameterLocation.Body))
+    {
+      @:// req.parameters.@(parameter.Name) = await util.xml2js(req.body.toString('utf8'))
+      @:req.parameters.@(parameter.Name) = JSON.parse(req.body.toString('utf8'))
+    }
+
+    @foreach(var parameter in Model.LogicalParameters.Where(p => p.Location == ParameterLocation.Header))
+    {
+      switch (parameter.Name)
+      {
+          case "metadata":
+    @:req.parameters.@(parameter.Name) = util.getMetaFromHeader(req.rawHeaders)
+          break;
+          case "version":
+    @:req.parameters.@(parameter.Name) = util.getVersionFromHeader(req.rawHeaders)          
+          break;
+          case "requestId": 
+    @:req.parameters.@(parameter.Name) = util.getRequestIdFromHeader(req.rawHeaders)          
+          break;
+      }
+    }
+
+    req.parameters.now = Date.parse(new Date()) / 1000
+    // Validation
+    try{
+      @Model.ValidationString
+    } catch(error) {
+      req.error = error
+    }
+    // action
+    try {
+      action(req, res)
+    } catch(e) {
+      res.status(e.statusCode || 500).send(e.message);
+      if (!e.statusCode) throw e;
+    }
+    return
+  }
+  next()
+})

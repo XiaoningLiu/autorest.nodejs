@@ -1,0 +1,40 @@
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.CodeModelJs>
+/*
+@Header(" * ")
+ */
+@EmptyLine
+
+module.exports = (req, res) =>{
+  actions['ERROR_HANDLER'](req.error, res)
+  actions[req.operation](req.parameters, res)
+}
+const actions = {}
+actions[undefined] = (parameters, res) => {
+    res.status(501).send('Not Implemented yet.');
+}
+
+actions['ERROR_HANDLER'] = (error, res) => {
+  if(error){
+    res.status(400).send({
+      error: {
+        code: 1,
+        message: error.message
+      }
+    });
+  }
+}
+
+@foreach(var methodGroupModel in Model.MethodGroupModels)
+{
+  foreach(var method in methodGroupModel.MethodTemplateModels)
+  {
+    @:const @(@method.SerializedName.ToCamelCase()) = require('./actions/@(methodGroupModel.TypeName.ToCamelCase())/@(method.SerializedName.ToPascalCase())')
+    @:actions['@method.SerializedName.ToCamelCase()'] = (parameters, res) =>{
+      @:@(@method.SerializedName.ToCamelCase()).process(parameters, res)
+    @:}
+  }
+}

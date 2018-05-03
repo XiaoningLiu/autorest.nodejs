@@ -1,0 +1,20 @@
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.CodeModelJs>
+/*
+@Header(" * ")
+ */
+@EmptyLine
+
+module.exports = {
+  Operations:{
+    @foreach (var methodGroupModel in Model.MethodGroupModels)
+    {
+      @:@(methodGroupModel.TypeName.ToCamelCase()):{
+      @:  @methodGroupModel.GenerateConstantList()  
+      @:},
+    }
+  }
+}

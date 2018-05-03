@@ -63,7 +63,14 @@ namespace AutoRest.NodeJS.Model
         {
             return new[]
             {
-                "\"ms-rest\": \"^2.3.3\""
+                "\"body-parser\": \"~1.15.2\"",
+                "\"cookie-parser\": \"~1.4.3\"",
+                "\"debug\": \"~2.2.0\"",
+                "\"express\": \"~4.13.4\"",
+                "\"morgan\": \"~1.7.0\"",
+                "\"xml2js\": \"^0.4.19\"",
+                "\"uuid\": \"^3.0.1\"",
+                "\"js2xmlparser\": \"^2.0.2\""
             };
         }
 

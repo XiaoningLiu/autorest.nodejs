@@ -1,0 +1,47 @@
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.CodeModelJs>
+/*
+@Header(" * ")
+ */
+@EmptyLine
+const xml2js = require('xml2js')
+@EmptyLine
+module.exports = {
+  xml2js: (xmlString) => {
+    return new Promise((resolve, reject) => {
+      xml2js.parseString(xmlString, (error, result) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve(result)
+        }
+      })
+    })
+  },
+  getMetaFromHeader: (rawHeaders) => {
+    let result = rawHeaders.map((e, i, a) => {
+      if (e.indexOf('x-ms-meta-') !== -1) {
+          e = e.replace('x-ms-meta-', '')
+          const o = {}
+          o[e] = a[i + 1]
+          return o
+      }
+    }).filter((e) => {
+        return e !== undefined
+    }).reduce((acc, e) => {
+        const key = Object.keys(e)[0]
+        acc[key] = e[key]
+        return acc
+    }, {})
+    return JSON.stringify(result)
+  },
+  getVersionFromHeader: (rawHeaders) => {
+    return '1'
+  },
+  getRequestIdFromHeader: (rawHeaders) => {
+    return '1'
+  }
+}

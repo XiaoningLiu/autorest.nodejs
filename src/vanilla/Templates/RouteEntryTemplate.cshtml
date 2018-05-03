@@ -1,0 +1,17 @@
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.CodeModelJs>
+/*
+@Header(" * ")
+ */
+@EmptyLine
+const fs = require('fs')
+const path = require('path')
+
+module.exports = function(app) {
+  fs.readdirSync(path.join(__dirname, './routes' )).forEach(function(name) {
+    app.use('/', require(path.join(__dirname, './routes', name)))
+  })
+};

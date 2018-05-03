@@ -40,8 +40,6 @@ namespace AutoRest.NodeJS.Azure
             // Service client
             await GenerateServiceClientJs(() => new AzureServiceClientTemplate { Model = codeModel }, generatorSettings).ConfigureAwait(false);
 
-            await GenerateServiceClientDts(() => new AzureServiceClientTemplateTS { Model = codeModel }, generatorSettings).ConfigureAwait(false);
-
             //Models
             if (codeModel.ModelTypes.Any())
             {
@@ -65,13 +63,11 @@ namespace AutoRest.NodeJS.Azure
             //MethodGroups
             if (codeModel.MethodGroupModels.Any())
             {
-                await GenerateMethodGroupIndexTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
-
-                await GenerateMethodGroupIndexTemplateDts(codeModel, generatorSettings).ConfigureAwait(false);
+                await GenerateRouteEntryTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
 
                 foreach (var methodGroupModel in codeModel.MethodGroupModels)
                 {
-                    await GenerateMethodGroupJs(() => new AzureMethodGroupTemplate { Model = methodGroupModel }, generatorSettings).ConfigureAwait(false);
+                    await GenerateRouteGroupJs(() => new AzureMethodGroupTemplate { Model = methodGroupModel }, generatorSettings).ConfigureAwait(false);
                 }
             }
 

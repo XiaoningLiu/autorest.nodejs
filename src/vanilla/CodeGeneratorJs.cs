@@ -41,11 +41,11 @@ namespace AutoRest.NodeJS
             codeModel.PopulateFromSettings(generatorSettings);
 
             // Service client
+            // Generate Index.js entry file for the server.
             await GenerateServiceClientJs(() => new ServiceClientTemplate { Model = codeModel }, generatorSettings).ConfigureAwait(false);
 
-            await GenerateServiceClientDts(() => new ServiceClientTemplateTS { Model = codeModel }, generatorSettings).ConfigureAwait(false);
-
-            //Models
+            // Models
+            // Not Change from the Node Js Client
             if (codeModel.ModelTypes.Any())
             {
                 await GenerateModelIndexJs(() => new ModelIndexTemplate { Model = codeModel }, generatorSettings).ConfigureAwait(false);
@@ -58,18 +58,35 @@ namespace AutoRest.NodeJS
                 }
             }
 
-            //MethodGroups
+            // MethodGroups
+            // Generate Router (Name not change for convinent)
             if (codeModel.MethodGroupModels.Any())
             {
-                await GenerateMethodGroupIndexTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
-
-                await GenerateMethodGroupIndexTemplateDts(codeModel, generatorSettings).ConfigureAwait(false);
+                await GenerateRouteEntryTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
 
                 foreach (MethodGroupJs methodGroupModel in codeModel.MethodGroupModels)
                 {
-                    await GenerateMethodGroupJs(() => new MethodGroupTemplate { Model = methodGroupModel }, generatorSettings).ConfigureAwait(false);
+                    await GenerateRouteGroupJs(() => new RouteGroupTemplate { Model = methodGroupModel }, generatorSettings).ConfigureAwait(false);
                 }
             }
+
+            // Generate Actions
+            if (codeModel.MethodGroupModels.Any())
+            {
+                await GenerateActionEntryTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
+
+                foreach (MethodGroupJs methodGroupModel in codeModel.MethodGroupModels)
+                {
+                    foreach (MethodJs method in methodGroupModel.MethodTemplateModels)
+                    {
+                        await GenerateActionJs(() => new ActionTemplate { Model = method }, generatorSettings).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            await GenerateConstantsTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
+
+            await GenerateUtilTemplateJs(codeModel, generatorSettings).ConfigureAwait(false);
 
             await GeneratePackageJson(codeModel, generatorSettings).ConfigureAwait(false);
 
@@ -81,13 +98,7 @@ namespace AutoRest.NodeJS
         protected async Task GenerateServiceClientJs<T>(Func<Template<T>> serviceClientTemplateCreator, GeneratorSettingsJs generatorSettings) where T : CodeModelJs
         {
             Template<T> serviceClientTemplate = serviceClientTemplateCreator();
-            await Write(serviceClientTemplate, GetSourceCodeFilePath(generatorSettings, serviceClientTemplate.Model.Name.ToCamelCase() + ".js"));
-        }
-
-        protected async Task GenerateServiceClientDts<T>(Func<Template<T>> serviceClientTemplateCreator, GeneratorSettingsJs generatorSettings) where T : CodeModelJs
-        {
-            Template<T> serviceClientTemplateTS = serviceClientTemplateCreator();
-            await Write(serviceClientTemplateTS, GetSourceCodeFilePath(generatorSettings, serviceClientTemplateTS.Model.Name.ToCamelCase() + ".d.ts"));
+            await Write(serviceClientTemplate, "index.js");
         }
 
         protected async Task GenerateModelIndexJs<T>(Func<Template<T>> modelIndexTemplateCreator, GeneratorSettingsJs generatorSettings) where T : CodeModelJs
@@ -108,22 +119,41 @@ namespace AutoRest.NodeJS
             await Write(modelTemplate, GetModelSourceCodeFilePath(generatorSettings, model.NameAsFileName.ToCamelCase() + ".js")).ConfigureAwait(false);
         }
 
-        protected async Task GenerateMethodGroupIndexTemplateJs(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
+        protected async Task GenerateConstantsTemplateJs(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
         {
-            var methodGroupIndexTemplate = new MethodGroupIndexTemplate { Model = codeModel };
-            await Write(methodGroupIndexTemplate, GetOperationSourceCodeFilePath(generatorSettings, "index.js")).ConfigureAwait(false);
+            var ConstantsTemplate = new ConstantsTemplate {Model = codeModel};
+            await Write(ConstantsTemplate, GetCoreSourceCodeFilePath(generatorSettings, "constants.js"));
         }
 
-        protected async Task GenerateMethodGroupIndexTemplateDts(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
+        protected async Task GenerateUtilTemplateJs(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
         {
-            var methodGroupIndexTemplateTS = new MethodGroupIndexTemplateTS { Model = codeModel };
-            await Write(methodGroupIndexTemplateTS, GetOperationSourceCodeFilePath(generatorSettings, "index.d.ts")).ConfigureAwait(false);
+            var UtilTemplate = new UtilTemplate {Model = codeModel};
+            await Write(UtilTemplate, GetCoreSourceCodeFilePath(generatorSettings, "util.js"));
         }
 
-        protected async Task GenerateMethodGroupJs<T>(Func<Template<T>> methodGroupTemplateCreator, GeneratorSettingsJs generatorSettings) where T : MethodGroupJs
+        protected async Task GenerateRouteEntryTemplateJs(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
         {
-            Template<T> methodGroupTemplate = methodGroupTemplateCreator();
-            await Write(methodGroupTemplate, GetOperationSourceCodeFilePath(generatorSettings, methodGroupTemplate.Model.TypeName.ToCamelCase() + ".js")).ConfigureAwait(false);
+            var RouteEntryTemplate = new RouteEntryTemplate { Model = codeModel };
+            await Write(RouteEntryTemplate, GetSourceCodeFilePath(generatorSettings, "route.js")).ConfigureAwait(false);
+        }
+
+        protected async Task GenerateActionEntryTemplateJs(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
+        {
+            var ActionEntryTemplate = new ActionEntryTemplate { Model = codeModel };
+            await Write(ActionEntryTemplate, GetSourceCodeFilePath(generatorSettings, "action.js")).ConfigureAwait(false);
+        }
+
+
+        protected async Task GenerateRouteGroupJs<T>(Func<Template<T>> routeGroupTemplateCreator, GeneratorSettingsJs generatorSettings) where T : MethodGroupJs
+        {
+            Template<T> routeGroupTemplate = routeGroupTemplateCreator();
+            await Write(routeGroupTemplate, GetRouteSourceCodeFilePath(generatorSettings, routeGroupTemplate.Model.TypeName.ToCamelCase() + ".js")).ConfigureAwait(false);
+        }
+
+        protected async Task GenerateActionJs<T>(Func<Template<T>> actionTemplateCreator, GeneratorSettingsJs generatorSettings) where T : MethodJs
+        {
+            Template<T> actionTemplate = actionTemplateCreator();
+            await Write(actionTemplate, GetActionSourceCodeFilePath(generatorSettings, actionTemplate.Model.Group.ToCamelCase(), actionTemplate.Model.SerializedName.ToPascalCase() + ".js")).ConfigureAwait(false);
         }
 
         protected async Task GeneratePackageJson(CodeModelJs codeModel, GeneratorSettingsJs generatorSettings)
@@ -156,8 +186,14 @@ namespace AutoRest.NodeJS
         protected string GetModelSourceCodeFilePath(GeneratorSettingsJs generatorSettings, string modelFileName)
             => GetSourceCodeFilePath(generatorSettings, "models", modelFileName);
 
-        protected string GetOperationSourceCodeFilePath(GeneratorSettingsJs generatorSettings, string operationFileName)
-            => GetSourceCodeFilePath(generatorSettings, "operations", operationFileName);
+        protected string GetRouteSourceCodeFilePath(GeneratorSettingsJs generatorSettings, string routeFileName)
+            => GetSourceCodeFilePath(generatorSettings, "routes", routeFileName);
+
+        protected string GetActionSourceCodeFilePath(GeneratorSettingsJs generatorSettings, string methodGroupName, string actionFileName)
+            =>GetSourceCodeFilePath(generatorSettings, "actions",methodGroupName , actionFileName);
+
+        protected string GetCoreSourceCodeFilePath(GeneratorSettingsJs generatorSettings, string coreFileName)
+            => GetSourceCodeFilePath(generatorSettings, "core", coreFileName);
 
         protected string GetSourceCodeFilePath(GeneratorSettingsJs generatorSettings, params string[] pathSegments)
         {

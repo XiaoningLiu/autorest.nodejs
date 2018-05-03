@@ -7,33 +7,14 @@
 @Header(" * ")
  */
 @EmptyLine
-/* jshint latedef:false */
-/* jshint forin:false */
-/* jshint noempty:false */
+const express = require('express')
+const path = require('path')
+const logger = require('morgan')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const http = require('http')
 @EmptyLine
-'use strict';
-@EmptyLine
-const msRest = require('ms-rest');
-const ServiceClient = msRest.ServiceClient;
-@if (Model.ContainsDurationProperty())
-{
-@:const moment = require('moment');
-@EmptyLine
-}
-@if (Model.MethodTemplateModels.Any())
-{
-@:const WebResource = msRest.WebResource;
-}
-
-@EmptyLine
-@if (Model.ModelTypes.Any())
-{
-@:const models = require('./models');
-}
-@if (Model.MethodGroupModels.Any())
-{
-@:const operations = require('./operations');
-}
+const app = express();
 @EmptyLine
 @foreach (var method in Model.MethodTemplateModels)
 {
@@ -41,96 +22,122 @@ const ServiceClient = msRest.ServiceClient;
 @:@(Include(new MethodTemplate(), method))
 }
 @EmptyLine
-@{var requiredParameters = Model.Properties.Where(p => p.IsRequired && !p.IsConstant && string.IsNullOrEmpty(p.DefaultValue));}
-@{var optionalParameters = Model.Properties.Where(p => (!p.IsRequired || p.IsRequired && !string.IsNullOrEmpty(p.DefaultValue)) && !p.IsConstant);}
-
-/** Class representing a @Model.Name. */
-class @(Model.Name) extends ServiceClient {
-  /**
-   * Create a @Model.Name.
-@foreach (var param in requiredParameters)
-{
-  @: * @@param {@param.ModelType.Name.ToCamelCase()} @param.Name - @param.Documentation
-}
-@if (!Model.IsCustomBaseUri)
-{
-  @: * @@param {string} [baseUri] - The base URI of the service.
-}
-   * @@param {object} [options] - The parameter options
-   * @@param {Array} [options.filters] - Filters to be added to the request pipeline
-   * @@param {object} [options.requestOptions] - Options for the underlying request object
-   * {@@link https://github.com/request/request#requestoptions-callback Options doc}
-   * @@param {boolean} [options.noRetryPolicy] - If set to true, turn off default retry policy
-@foreach (var param in optionalParameters)
-{
-   @:* @@param {@param.ModelType.Name.ToCamelCase()} [options.@param.Name] - @param.Documentation
-}
-   */
-  constructor(@(!string.IsNullOrEmpty(Model.RequiredConstructorParameters) ? Model.RequiredConstructorParameters + ", ": "")options) {
-@foreach (var param in requiredParameters)
-{
-  @:  if (@(param.Name) === null || @(param.Name) === undefined) {
-  @:    throw new Error('\'@(param.Name)\' cannot be null.');
-  @:  }
-}
-    @EmptyLine
-    if (!options) options = {};
-    @EmptyLine
-    super(@(requiredParameters.Any(p => p.ModelType.IsPrimaryType(KnownPrimaryType.Credentials)) ? "credentials" : "null"), options);
-    @EmptyLine
-@foreach (var property in Model.Properties.Where(p => p.DefaultValue != null))
-{
-    @:this.@(property.Name) = @(property.DefaultValue);
-}
-  
-@if(!Model.IsCustomBaseUri)
-{
-    @:this.baseUri = baseUri;
-
-    @:if (!this.baseUri) {
-      @:this.baseUri = '@Model.BaseUrl';
-    @:}
-}
-else
-{
-    @:this.baseUri = '@Model.BaseUrl';
-}
-
-@foreach (var param in requiredParameters)
-{
-  @:  this.@(param.Name) = @(param.Name);
-}
-  @EmptyLine
-    let packageInfo = this.getPackageJsonInfo(__dirname);
-    this.addUserAgentInfo(`${packageInfo.name}/${packageInfo.version}`);
-  @foreach (var property in optionalParameters)
-  { 
-    @:if(options.@(property.Name) !== null && options.@(property.Name) !== undefined) { 
-    @:  this.@(property.Name) = options.@(property.Name);
-    @:}
+app.use(logger('dev'));
+app.use(bodyParser.raw({
+  inflate: true,
+  limit: '10000kb',
+  type: function (type) {
+    return true
   }
+}))
+app.use(cookieParser());
 
-  @foreach (var methodGroup in Model.MethodGroupModels)
-  {
-    @:this.@(methodGroup.NameForProperty) = new operations.@(methodGroup.TypeName)(this);
-  }
-  
-  @if (Model.ModelTypes.Any())
-  {
-    @:this.models = models;
-  }
-@foreach (var method in Model.MethodTemplateModels)
-{
-    @:this._@(method.Name) = _@(method.Name);
+// setup the routers
+routes = require('./lib/route')(app);
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+    app.use(function (err, req, res, next) {
+        res.status(err.status || 500);
+        res.send({
+            message: err.message,
+            error: err
+        });
+    });
 }
-    msRest.addSerializationMixin(this);
-  }
+// production error handler
+// no stacktraces leaked to user
+app.use(function (err, req, res, next) {
+    res.status(err.status || 500);
+    res.send({
+        message: err.message,
+        error: {}
+    });
+});
 @EmptyLine
-@foreach (var method in Model.MethodTemplateModels)
-{
-  @:@(Include(new MethodPromiseWrapperTemplate(), method))
-  @EmptyLine
-}
-}
+/**
+ * Get port from environment and store in Express.
+ */
+var port = normalizePort(process.env.PORT || '3000')
+app.set('port', port)
 @EmptyLine
-@Model.ConstructServiceClientJSExports()
+/**
+ * Create HTTP server.
+ */
+var server = http.createServer(app)
+
+function normalizePort (val) {
+  var port = parseInt(val, 10)
+  if (isNaN(port)) {
+        // named pipe
+    return val
+  }
+  if (port >= 0) {
+        // port number
+    return port
+  }
+  return false
+}
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.on('error', onError)
+server.on('listening', onListening)
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError (error) {
+  if (error.syscall !== 'listen') {
+    throw error
+  }
+  var port = server.address().port
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges')
+      process.exit(1)
+      break
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use')
+      process.exit(1)
+      break
+    default:
+      throw error
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening () {
+  var addr = server.address()
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port
+  console.log('Listening on ' + bind)
+}
+
+process.on('unhandledRejection', (e) => {
+	console.error('**PANIC** Something unexpected happened! Queue Storage Emulator may be in an inconsistent state!');
+	console.error(e);
+});
+
+// Start the server
+server.listen(port)

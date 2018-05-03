@@ -1,0 +1,21 @@
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.MethodGroupJs>
+/*
+@Header(" * ")
+ */
+@EmptyLine
+const Operations = require('../core/constants').Operations
+const util = require('../core/util')
+const action = require('../action')
+let router = require('express').Router();
+
+@foreach (var method in Model.MethodTemplateModels)
+{
+@:@(Include(new RouteTemplate(), method))
+@EmptyLine
+}
+@EmptyLine
+module.exports = router;

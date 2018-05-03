@@ -37,5 +37,16 @@ namespace AutoRest.NodeJS.Model
         public bool ContainsStream =>
             this.Methods.Any(m => m.Parameters.FirstOrDefault(p => p.ModelType.IsPrimaryType(KnownPrimaryType.Stream)) != null ||
                         m.ReturnType.Body.IsPrimaryType(KnownPrimaryType.Stream));
+
+        public string GenerateConstantList()
+        {
+            List<string> constantList = new List<string>();
+            foreach (var method in this.MethodTemplateModels)
+            {
+                constantList.Add(string.Format("{0}:'{1}'", method.SerializedName.ToUpper(), method.SerializedName.ToCamelCase()));
+            }
+            string constantString = string.Join(",\n", constantList);
+            return constantString;
+        }
     }
 }

@@ -18,8 +18,8 @@ namespace AutoRest.NodeJS.Model
             Name.OnGet += value =>
                 IsClientProperty
                     ? false == Method?.MethodGroup?.IsCodeModelMethodGroup
-                        ? $"this.client.{ClientProperty.Name}"
-                        : $"this.{ClientProperty.Name}"
+                        ? $"{ClientProperty.Name}"
+                        : $"{ClientProperty.Name}"
                     : CodeNamer.Instance.GetParameterName(value);
         }
 

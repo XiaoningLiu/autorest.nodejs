@@ -178,22 +178,22 @@ namespace AutoRest.NodeJS
             {
                 if (isRequired)
                 {
-                    builder.AppendLine("if ({0} === null || {0} === undefined || typeof {0} !== '{1}') {{", valueReference, lowercaseTypeName);
+                    builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined || typeof req.parameters.{0} !== '{1}') {{", valueReference, lowercaseTypeName);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
 
-                builder.AppendLine("if ({0} !== null && {0} !== undefined && typeof {0} !== '{1}') {{", valueReference, lowercaseTypeName);
+                builder.AppendLine("if (req.parameters.{0} !== null && req.parameters.{0} !== undefined && typeof req.parameters.{0} !== '{1}') {{", valueReference, lowercaseTypeName);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else if (primary.KnownPrimaryType == KnownPrimaryType.Stream)
             {
                 if (isRequired)
                 {
-                    builder.AppendLine("if ({0} === null || {0} === undefined) {{", valueReference, lowercaseTypeName);
+                    builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined) {{", valueReference, lowercaseTypeName);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
 
-                builder.AppendLine("if ({0} !== null && {0} !== undefined && typeof {0}.valueOf() !== '{1}') {{", valueReference, lowercaseTypeName);
+                builder.AppendLine("if (req.parameters.{0} !== null && req.parameters.{0} !== undefined && typeof req.parameters.{0}.valueOf() !== '{1}') {{", valueReference, lowercaseTypeName);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else if (primary.KnownPrimaryType == KnownPrimaryType.String)
@@ -201,11 +201,11 @@ namespace AutoRest.NodeJS
                 if (isRequired)
                 {
                     //empty string can be a valid value hence we cannot implement the simple check if (!{0})
-                    builder.AppendLine("if ({0} === null || {0} === undefined || typeof {0}.valueOf() !== '{1}') {{", valueReference, lowercaseTypeName);
+                    builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined || typeof req.parameters.{0}.valueOf() !== '{1}') {{", valueReference, lowercaseTypeName);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
 
-                builder.AppendLine("if ({0} !== null && {0} !== undefined && typeof {0}.valueOf() !== '{1}') {{", valueReference, lowercaseTypeName);
+                builder.AppendLine("if (req.parameters.{0} !== null && req.parameters.{0} !== undefined && typeof req.parameters.{0}.valueOf() !== '{1}') {{", valueReference, lowercaseTypeName);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else if (primary.KnownPrimaryType == KnownPrimaryType.Uuid)
@@ -214,22 +214,22 @@ namespace AutoRest.NodeJS
                 {
                     requiredTypeErrorMessage = "throw new Error('{0} cannot be null or undefined and it must be of type string and must be a valid {1}.');";
                     //empty string can be a valid value hence we cannot implement the simple check if (!{0})
-                    builder.AppendLine("if ({0} === null || {0} === undefined || typeof {0}.valueOf() !== 'string' || !msRest.isValidUuid({0})) {{", valueReference);
+                    builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined || typeof req.parameters.{0}.valueOf() !== 'string' || !msRest.isValidUuid({0})) {{", valueReference);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
                 typeErrorMessage = "throw new Error('{0} must be of type string and must be a valid {1}.');";
-                builder.AppendLine("if ({0} !== null && {0} !== undefined && !(typeof {0}.valueOf() === 'string' && msRest.isValidUuid({0}))) {{", valueReference);
+                builder.AppendLine("if (req.parameters.{0} !== null && req.parameters.{0} !== undefined && !(typeof req.parameters.{0}.valueOf() === 'string' && msRest.isValidUuid({0}))) {{", valueReference);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else if (primary.KnownPrimaryType == KnownPrimaryType.ByteArray || primary.KnownPrimaryType == KnownPrimaryType.Base64Url)
             {
                 if (isRequired)
                 {
-                    builder.AppendLine("if (!Buffer.isBuffer({0})) {{", valueReference, lowercaseTypeName);
+                    builder.AppendLine("if (!Buffer.isBuffer(req.parameters.{0})) {{", valueReference, lowercaseTypeName);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
 
-                builder.AppendLine("if ({0} && !Buffer.isBuffer({0})) {{", valueReference, lowercaseTypeName);
+                builder.AppendLine("if (req.parameters.{0} && !Buffer.isBuffer(req.parameters.{0})) {{", valueReference, lowercaseTypeName);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else if (primary.KnownPrimaryType == KnownPrimaryType.DateTime || primary.KnownPrimaryType == KnownPrimaryType.Date || 
@@ -237,28 +237,28 @@ namespace AutoRest.NodeJS
             {
                 if (isRequired)
                 {
-                    builder.AppendLine("if(!{0} || !({0} instanceof Date || ", valueReference)
+                    builder.AppendLine("if(!req.parameters.{0} || !(req.parameters.{0} instanceof Date || ", valueReference)
                                                   .Indent()
                                                   .Indent()
-                                                  .AppendLine("(typeof {0}.valueOf() === 'string' && !isNaN(Date.parse({0}))))) {{", valueReference);
+                                                  .AppendLine("(typeof req.parameters.{0}.valueOf() === 'string' && !isNaN(Date.parse(req.parameters.{0}))))) {{", valueReference);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
 
-                builder = builder.AppendLine("if ({0} && !({0} instanceof Date || ", valueReference)
+                builder = builder.AppendLine("if (req.parameters.{0} && !(req.parameters.{0} instanceof Date || ", valueReference)
                                               .Indent()
                                               .Indent()
-                                              .AppendLine("(typeof {0}.valueOf() === 'string' && !isNaN(Date.parse({0}))))) {{", valueReference);
+                                              .AppendLine("(typeof req.parameters.{0}.valueOf() === 'string' && !isNaN(Date.parse(req.parameters.{0}))))) {{", valueReference);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else if (primary.KnownPrimaryType == KnownPrimaryType.TimeSpan)
             {
                 if (isRequired)
                 {
-                    builder.AppendLine("if(!{0} || !moment.isDuration({0})) {{", valueReference);
+                    builder.AppendLine("if(!req.parameters.{0} || !moment.isDuration(req.parameters.{0})) {{", valueReference);
                     return ConstructValidationCheck(builder, requiredTypeErrorMessage, valueReference, primary.Name).ToString();
                 }
 
-                builder.AppendLine("if({0} && !moment.isDuration({0})) {{", valueReference);
+                builder.AppendLine("if(req.parameters.{0} && !moment.isDuration(req.parameters.{0})) {{", valueReference);
                 return ConstructValidationCheck(builder, typeErrorMessage, valueReference, primary.Name).ToString();
             }
             else
@@ -316,13 +316,13 @@ namespace AutoRest.NodeJS
             var enumValue = scope.GetUniqueName("enumValue");
             var updatedValue = valueReference;
 
-            builder.AppendLine("if ({0}) {{", valueReference)
+            builder.AppendLine("if (req.parameters.{0}) {{", valueReference)
                         .Indent()
                             .AppendLine("let {0} = {1};", allowedValues, enumType.GetEnumValuesArray());
 
             if (valueReference.StartsWith("this."))
             {
-                builder.AppendLine("let {0} = {1};", enumValue, valueReference);
+                builder.AppendLine("let {0} = req.parameters.{1};", enumValue, valueReference);
                 updatedValue = enumValue;
             }
             builder.AppendLine("if (!{0}.some( function(item) {{ return item === {1}; }})) {{", allowedValues, updatedValue)
@@ -359,7 +359,7 @@ namespace AutoRest.NodeJS
             //Only validate whether the composite type is present, if it is required. Detailed validation happens in serialization.
             if (isRequired)
             {
-                builder.AppendLine("if ({0} === null || {0} === undefined) {{", valueReference)
+                builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined) {{", valueReference)
                          .Indent()
                          .AppendLine("throw new Error('{0} cannot be null or undefined.');", escapedValueReference)
                        .Outdent()
@@ -384,22 +384,22 @@ namespace AutoRest.NodeJS
             {
                 if (isRequired)
                 {
-                    return builder.AppendLine("if (!Array.isArray({0})) {{", valueReference)
+                    return builder.AppendLine("if (!Array.isArray(req.parameters.{0})) {{", valueReference)
                         .Indent()
                           .AppendLine("throw new Error('{0} cannot be null or undefined and it must be of type {1}.');",
                           escapedValueReference, sequence.Name.ToLower())
                         .Outdent()
                       .AppendLine("}")
-                      .AppendLine("for (let {1} = 0; {1} < {0}.length; {1}++) {{", valueReference, indexVar)
+                      .AppendLine("for (let {1} = 0; {1} < req.parameters.{0}.length; {1}++) {{", valueReference, indexVar)
                             .Indent()
                               .AppendLine(innerValidation)
                             .Outdent()
                           .AppendLine("}").ToString();
                 }
 
-                return builder.AppendLine("if (Array.isArray({0})) {{", valueReference)
+                return builder.AppendLine("if (Array.isArray(req.parameters.{0})) {{", valueReference)
                         .Indent()
-                          .AppendLine("for (let {1} = 0; {1} < {0}.length; {1}++) {{", valueReference, indexVar)
+                          .AppendLine("for (let {1} = 0; {1} < req.parameters.{0}.length; {1}++) {{", valueReference, indexVar)
                             .Indent()
                               .AppendLine(innerValidation)
                             .Outdent()
@@ -426,22 +426,22 @@ namespace AutoRest.NodeJS
             {
                 if (isRequired)
                 {
-                    return builder.AppendLine("if ({0} === null || {0} === undefined || typeof {0} !== 'object') {{", valueReference)
+                    return builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined || typeof req.parameters.{0} !== 'object') {{", valueReference)
                         .Indent()
                           .AppendLine("throw new Error('{0} cannot be null or undefined and it must be of type {1}.');",
                             escapedValueReference, dictionary.Name.ToLower())
                         .Outdent()
                       .AppendLine("}")
-                      .AppendLine("for(let {0} in {1}) {{", valueVar, valueReference)
+                      .AppendLine("for(let {0} in req.parameters.{1}) {{", valueVar, valueReference)
                         .Indent()
                           .AppendLine(innerValidation)
                         .Outdent()
                       .AppendLine("}").ToString();
                 }
 
-                return builder.AppendLine("if ({0} && typeof {0} === 'object') {{", valueReference)
+                return builder.AppendLine("if (req.parameters.{0} && typeof req.parameters.{0} === 'object') {{", valueReference)
                         .Indent()
-                          .AppendLine("for(let {0} in {1}) {{", valueVar, valueReference)
+                          .AppendLine("for(let {0} in req.parameters.{1}) {{", valueVar, valueReference)
                             .Indent()
                               .AppendLine(innerValidation)
                             .Outdent()
@@ -576,42 +576,43 @@ namespace AutoRest.NodeJS
                 switch (constraint)
                 {
                     case Constraint.ExclusiveMaximum:
-                        constraintCheck = $"{valueReference} >= {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference} >= {constraints[constraint]}";
                         break;
                     case Constraint.ExclusiveMinimum:
-                        constraintCheck = $"{valueReference} <= {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference} <= {constraints[constraint]}";
                         break;
                     case Constraint.InclusiveMaximum:
-                        constraintCheck = $"{valueReference} > {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference} > {constraints[constraint]}";
                         break;
                     case Constraint.InclusiveMinimum:
-                        constraintCheck = $"{valueReference} < {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference} < {constraints[constraint]}";
                         break;
                     case Constraint.MaxItems:
-                        constraintCheck = $"{valueReference}.length > {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference}.length > {constraints[constraint]}";
                         break;
                     case Constraint.MaxLength:
-                        constraintCheck = $"{valueReference}.length > {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference}.length > {constraints[constraint]}";
                         break;
                     case Constraint.MinItems:
-                        constraintCheck = $"{valueReference}.length < {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference}.length < {constraints[constraint]}";
                         break;
                     case Constraint.MinLength:
-                        constraintCheck = $"{valueReference}.length < {constraints[constraint]}";
+                        constraintCheck = $"req.parameters.{valueReference}.length < {constraints[constraint]}";
                         break;
                     case Constraint.MultipleOf:
-                        constraintCheck = $"{valueReference} % {constraints[constraint]} !== 0";
+                        constraintCheck = $"req.parameters.{valueReference} % {constraints[constraint]} !== 0";
                         break;
                     case Constraint.Pattern:
-
-                        constraintValue = "/" + constraintValue.Replace("/", "\\/") + "/";
-                        constraintCheck = $"{valueReference}.match({constraintValue}) === null";
+                        // TODO: not match the metadata
+                        // constraintValue = "/" + constraintValue.Replace("/", "\\/") + "/";
+                        // constraintCheck = $"req.parameters.{valueReference}.match({constraintValue}) === null";
+                        constraintCheck = $"false";
                         break;
                     case Constraint.UniqueItems:
                         if ("true".EqualsIgnoreCase(constraints[constraint]))
                         {
                             constraintCheck = string.Format(
-                                "{0}.length !== {0}.filter(function(item, i, ar) {{ return ar.indexOf(item) === i; }}).length", valueReference);
+                                "req.parameters.{0}.length !== req.parameters.{0}.filter(function(item, i, ar) {{ return ar.indexOf(item) === i; }}).length", valueReference);
                         }
                         else
                         {

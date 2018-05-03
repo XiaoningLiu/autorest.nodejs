@@ -1,0 +1,18 @@
+@using System
+@using System.Linq
+@using AutoRest.Core.Model
+@using AutoRest.Core.Utilities
+@using AutoRest.NodeJS.vanilla.Templates
+@using System.Reflection
+@inherits AutoRest.Core.Template<AutoRest.NodeJS.Model.MethodJs>
+@EmptyLine
+class @Model.Name.ToPascalCase() {
+    constructor() {
+    }
+
+    process(paramters, res) {
+        res.status(@Model.GetFirstStatusCode()).send();
+    }
+}
+
+module.exports = new @(Model.Name.ToPascalCase())() 

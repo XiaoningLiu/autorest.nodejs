@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -105,6 +106,14 @@ namespace AutoRest.NodeJS.Model
         [JsonIgnore]
         public ParameterJs OptionsParameterTemplateModel { get; }
 
+        public string GetFirstStatusCode()
+        {
+            foreach (var responseStatus in Responses.Keys)
+            {
+                return GetStatusCodeReference(responseStatus);
+            }
+            return "199";
+        }
         /// <summary>
         /// Get the predicate to determine of the http operation status code indicates success
         /// </summary>
@@ -516,7 +525,7 @@ namespace AutoRest.NodeJS.Model
                     {
                         if (parameter.IsRequired)
                         {
-                            builder.AppendLine("if ({0} === null || {0} === undefined) {{", parameter.Name)
+                            builder.AppendLine("if (req.parameters.{0} === null || req.parameters.{0} === undefined) {{", parameter.Name)
                                      .Indent()
                                      .AppendLine("throw new Error('{0} cannot be null or undefined.');", parameter.Name)
                                    .Outdent()
@@ -528,7 +537,7 @@ namespace AutoRest.NodeJS.Model
                         builder.AppendLine(parameter.ModelType.ValidateType(this, parameter.Name, parameter.IsRequired));
                         if (parameter.Constraints != null && parameter.Constraints.Count > 0 && parameter.Location != ParameterLocation.Body)
                         {
-                            builder.AppendLine("if ({0} !== null && {0} !== undefined) {{", parameter.Name).Indent();
+                            builder.AppendLine("if (req.parameters.{0} !== null && req.parameters.{0} !== undefined) {{", parameter.Name).Indent();
                             builder = parameter.ModelType.AppendConstraintValidations(parameter.Name, parameter.Constraints, builder);
                             builder.Outdent().AppendLine("}");
                         }
@@ -584,6 +593,29 @@ namespace AutoRest.NodeJS.Model
         public static string GetStatusCodeReference(HttpStatusCode code)
         {
             return string.Format(CultureInfo.InvariantCulture, "{0}", (int)code);
+        }
+
+        public virtual string BuildRegExp(string url)
+        {            
+            url = url.Replace("}", "");
+            return url.Replace("{", ":");
+        }
+
+        public virtual string BuildQueryCondition()
+        {
+            List<String> queryCondition = new List<String>();
+            foreach (var parameter in LogicalParameters.Where(p => p.Location == ParameterLocation.Query))
+            {
+                if (!parameter.IsClientProperty && parameter.IsRequired){
+                    if(parameter.IsConstant){
+                        queryCondition.Add(String.Format("req.query.{0} === {1}", parameter.Name, parameter.DefaultValue));
+                    } else {
+                        queryCondition.Add(String.Format("req.query.{0} !== undefined", parameter.Name));
+                    }
+                }
+            }
+            String QueryString = String.Join(" && ", queryCondition);
+            return QueryString == "" ? "true" : QueryString;
         }
 
         /// <summary>
