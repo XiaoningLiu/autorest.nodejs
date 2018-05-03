@@ -35,8 +35,7 @@ router.@(Model.HttpMethod.ToString().ToLower())('@Model.BuildRegExp(@Model.Url.T
 
     @foreach(var parameter in Model.LogicalParameters.Where(p => p.Location == ParameterLocation.Body))
     {
-      @:// req.parameters.@(parameter.Name) = await util.xml2js(req.body.toString('utf8'))
-      @:req.parameters.@(parameter.Name) = JSON.parse(req.body.toString('utf8'))
+      @:req.parameters.@(parameter.Name) = await util.xml2js(req.body.toString('utf8'))
     }
 
     @foreach(var parameter in Model.LogicalParameters.Where(p => p.Location == ParameterLocation.Header))

@@ -24,12 +24,12 @@ class Dequeue {
         messageText: msg.msg
       }))
     }
-    let jsBody = model.toJs()
+    const xmlBody = model.toXml()
     const response = new AzuriteQueueResponse()
     response.addHttpProperty(N.CONTENT_TYPE, 'application/xml')
     res.set(response.httpProps)
-    console.log(jsBody)
-    res.status(200).send(jsBody)
+    console.log(xmlBody)
+    res.status(200).send(xmlBody)
   }
 }
 module.exports = new Dequeue()

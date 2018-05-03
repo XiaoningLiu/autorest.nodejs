@@ -12,7 +12,7 @@ class Enqueue {
     paramters.visibilityTimeout = paramters.visibilityTimeout || 0
     paramters.messageTtl = paramters.messageTtl || 60 * 60 * 24 * 7
     const { queue } = QueueManager.getQueueAndMessage({ queueName: paramters.queueName })
-    const message = queue.put({ now: paramters.now, msg: paramters.queueMessage.MessageText, visibilityTimeout: paramters.visibilityTimeout, messageTtl: paramters.messageTtl })
+    const message = queue.put({ now: paramters.now, msg: paramters.queueMessage.QueueMessage.MessageText, visibilityTimeout: paramters.visibilityTimeout, messageTtl: paramters.messageTtl })
     const model = new QueueMessagesListXmlModel()
     model.add(new QueueMessageXmlModel(
       {
@@ -22,12 +22,11 @@ class Enqueue {
         popReceipt: message.popReceipt,
         timeNextVisible: new Date(message.timeNextVisible * 1000).toUTCString()
       }))
-    let jsBody = model.toJs()
+    const xmlBody = model.toXml()
     const response = new AzuriteQueueResponse()
-    response.addHttpProperty(N.CONTENT_TYPE, 'application/json')
+    response.addHttpProperty(N.CONTENT_TYPE, 'application/xml')
     res.set(response.httpProps)
-    console.log(jsBody)
-    res.status(201).send(jsBody)
+    res.status(201).send(xmlBody)
   }
 }
 module.exports = new Enqueue()
