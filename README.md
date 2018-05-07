@@ -13,7 +13,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-# Server Generatoin for Azure Storage Document
+# Server Generation for Azure Storage Document
 
 ## Target
 
@@ -23,7 +23,7 @@ The new architecture will try best to use the swagger spec. Trying to generate m
 Because of something like **x-ms-paths** that breaks the original OpenAPI definition. The **only way** to generate code is by using [AutoRest](https://github.com/Azure/autorest)
 
 ## Demo Steps
-1. Clone this [Repo](https://github.com/gamesgao/autorest.nodejs.git
+1. Clone this [Repo](https://github.com/gamesgao/autorest.nodejs.git)
 ```shell
 git clone https://github.com/gamesgao/autorest.nodejs.git
 ```
